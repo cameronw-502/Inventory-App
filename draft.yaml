@@ -1,0 +1,119 @@
+name: InventoryManagement
+models:
+  User:
+    schema:
+      name: string
+      email: string:unique
+      password: string
+      role: enum:admin,manager,staff
+      timestamps: true
+    relations:
+      hasMany: [Warehouse, Product]
+
+  Warehouse:
+    schema:
+      name: string
+      location: string
+      contact_person: string
+      phone: string
+      capacity: integer
+      timestamps: true
+    relations:
+      hasMany: [StockItem]
+      belongsTo: User
+
+  Product:
+    schema:
+      name: string
+      sku: string:unique
+      description: text
+      category: string
+      unit_price: decimal:10,2
+      reorder_level: integer
+      is_active: boolean
+      timestamps: true
+    relations:
+      hasMany: [StockItem]
+      belongsTo: User
+
+  StockItem:
+    schema:
+      warehouse_id: foreignId
+      product_id: foreignId
+      quantity: integer
+      batch_number: string:nullable
+      expiry_date: date:nullable
+      timestamps: true
+    relations:
+      belongsTo: [Warehouse, Product]
+
+  Transaction:
+    schema:
+      stock_item_id: foreignId
+      type: enum:in,out,transfer,adjustment
+      quantity: integer
+      reason: text:nullable
+      user_id: foreignId
+      timestamps: true
+    relations:
+      belongsTo: [StockItem, User]
+
+  Supplier:
+    schema:
+      name: string
+      contact_email: string:nullable
+      phone: string
+      address: text
+      notes: text:nullable
+      timestamps: true
+    relations:
+      hasMany: [Product]
+
+  Customer:
+    schema:
+      name: string
+      email: string:nullable
+      phone: string
+      address: text
+      notes: text:nullable
+      timestamps: true
+    relations:
+      hasMany: [Transaction]
+
+  Order:
+    schema:
+      order_number: string:unique
+      customer_id: foreignId
+      status: enum:pending,shipped,canceled
+      total_price: decimal:10,2
+      timestamps: true
+    relations:
+      belongsTo: [Customer]
+      hasMany: [OrderItem]
+
+  OrderItem:
+    schema:
+      order_id: foreignId
+      product_id: foreignId
+      quantity: integer
+      unit_price: decimal:10,2
+      total_price: decimal:10,2
+      timestamps: true
+    relations:
+      belongsTo: [Order, Product]
+
+permissions:
+  - admin: [manage_users, manage_products, manage_warehouses, manage_orders, view_reports]
+  - manager: [manage_products, manage_warehouses, manage_orders, view_reports]
+  - staff: [manage_orders, view_products]
+
+features:
+  - notifications
+  - audit_logs
+  - reporting:
+      dashboards:
+        - name: inventory_overview
+        - name: product_performance
+        - name: stock_levels
+  - search
+  - multi-tenancy: true
